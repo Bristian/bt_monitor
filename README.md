@@ -47,6 +47,123 @@ will have a live ACL connection when audio is playing.
 
 ---
 
+## Python virtual environment (venv) 🐍
+
+Using a virtual environment keeps the project's Python packages isolated from the rest of the
+system. This is especially important on Raspberry Pi OS Bookworm, which blocks global
+`pip install` by default (PEP 668).
+
+### Step 1 — Install the venv package
+
+`venv` is part of the Python standard library but the Debian/Raspberry Pi OS packaging splits
+it into a separate apt package:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y python3-venv python3-full
+```
+
+> **Why `python3-full`?** On Bookworm it pulls in `ensurepip` which is required to bootstrap
+> pip inside the venv. Without it you may get `ensurepip is not available` errors.
+
+### Step 2 — Create the virtual environment
+
+Run this once, from inside the project directory:
+
+```bash
+cd bt-monitor          # or wherever you cloned the repo
+python3 -m venv .venv
+```
+
+This creates a `.venv/` folder containing a self-contained Python interpreter and pip.
+You can name the folder anything you like; `.venv` is the conventional name.
+
+### Step 3 — Activate the virtual environment
+
+You must activate the venv **every time you open a new terminal session** before running the
+project scripts.
+
+```bash
+source .venv/bin/activate
+```
+
+Your prompt will change to show the venv name:
+
+```
+(.venv) pi@raspberrypi:~/bt-monitor $
+```
+
+That prefix confirms the venv is active. Any `python3` or `pip` command now uses the venv's
+isolated copies, not the system ones.
+
+### Step 4 — Install Python dependencies inside the venv
+
+With the venv active, install the optional plotting libraries:
+
+```bash
+pip install matplotlib pandas
+```
+
+No `--break-system-packages` flag is needed inside a venv — pip installs freely here.
+
+To confirm what is installed:
+
+```bash
+pip list
+```
+
+### Step 5 — Run the scripts inside the venv
+
+```bash
+# Always activate first (if not already active)
+source .venv/bin/activate
+
+# Run monitor (still needs sudo for raw BT socket; see sudo note below)
+sudo .venv/bin/python3 bt_monitor.py --mac AA:BB:CC:DD:EE:FF
+
+# Run plotter
+python3 plot_log.py bt_log.csv
+```
+
+> **sudo + venv note:** `sudo python3` uses the *system* Python, bypassing the venv.
+> Use the explicit venv path instead: `sudo .venv/bin/python3 bt_monitor.py …`
+> This gives you both root privileges (needed for RSSI) and the venv's packages.
+
+### Step 6 — Deactivate when done
+
+```bash
+deactivate
+```
+
+Your prompt returns to normal. The venv still exists on disk; just `source .venv/bin/activate`
+again next time.
+
+### Quick reference — venv cheat sheet
+
+| Task | Command |
+|------|---------|
+| Create venv | `python3 -m venv .venv` |
+| Activate | `source .venv/bin/activate` |
+| Confirm active | `which python3` → should show `.venv/bin/python3` |
+| Install a package | `pip install <package>` |
+| List installed packages | `pip list` |
+| Save dependencies to file | `pip freeze > requirements.txt` |
+| Install from requirements file | `pip install -r requirements.txt` |
+| Deactivate | `deactivate` |
+| Delete venv (start fresh) | `rm -rf .venv` |
+
+### Recreating the venv on a new Pi (or after cloning the repo)
+
+If you saved a `requirements.txt` you can recreate the exact environment in two commands:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+---
+
 ## Quick start
 
 ### 1. Install dependencies
@@ -259,8 +376,11 @@ sudo apt-get install -y bluez              # includes hcitool on Bullseye
 
 ## Plotting results (optional)
 
+Activate your venv first (see [Python virtual environment](#python-virtual-environment-venv-) above), then:
+
 ```bash
-pip3 install --break-system-packages matplotlib pandas
+source .venv/bin/activate
+pip install matplotlib pandas   # only needed once
 python3 plot_log.py bt_log.csv
 ```
 
