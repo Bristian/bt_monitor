@@ -36,7 +36,7 @@ This is the most common source of confusion. Your earbuds advertise **two differ
 hcitool scan
 
 # Or, if already paired:
-bluetoothctl paired-devices
+bluetoothctl devices Paired
 ```
 
 The address in `paired-devices` is the Classic BT MAC — it's the one that supports A2DP and
